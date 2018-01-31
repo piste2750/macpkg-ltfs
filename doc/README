@@ -1,0 +1,288 @@
+%Z% %I% %W% %G% %U%
+
+IBM Spectrum Archive Single Drive Edition Version 2.2.2.0 (9802)
+
+Licensed Materials - Property of IBM
+
+IBM Spectrum Archive Single Drive Edition Version 2.2.2.0 for Linux and Mac OS X
+
+Copyright IBM Corp. 2010, 2015
+
+This file is part of the IBM Spectrum Archive Single Drive Edition for Linux and Mac OS X
+(formally known as IBM Linear Tape File System)
+
+IBM Spectrum Archive Single Drive Edition for Linux and Mac OS X is free software;
+you can redistribute it and/or modify it under the terms of the GNU Lesser
+General Public License as published by the Free Software Foundation,
+version 2.1 of the License.
+
+The IBM Spectrum Archive Single Drive Edition for Linux and Mac OS X is distributed in the
+hope that it will be useful, but WITHOUT ANY WARRANTY; without even the
+implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+See the GNU Lesser General Public License for more details.
+
+You should have received a copy of the GNU Lesser General Public
+License along with this library; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+or download the license from <http://www.gnu.org/licenses/>.
+
+-----------------------------------------
+ README for Linux and Mac OS X platforms
+------------------------------------------
+
+This README file applies to IBM Spectrum Archive Single Drive Edition Version 2.2, and to all subsequent
+releases, modifications, and service refreshes, until otherwise indicated in a
+new README file.
+
+This README file provides late-breaking information that may not have been incorporated
+into the IBM Spectrum Archive Single Drive Edition Information Center.
+
+Online user's guidance
+======================
+You can find information about IBM Spectrum Archive Single Drive Edition on IBM Knowledge Center:
+  http://www.ibm.com/support/knowledgecenter/STQNYL
+
+
+System Requirements:
+===================
+
+Operating Systems:
+    - RHEL 5.7, 5.8 and 5.9      (x86, x86_64)
+    - RHEL 6.2 and 6.4           (x86, x86_64, and ppc64)
+    - SLES 11.1, 11.2 and 11.3   (x86, x86_64)
+    - Mac OS X 10.6
+    - Mac OS X 10.7
+    - OS X 10.8
+    - OS X 10.9
+
+Tested drives (use with the latest version of drive firmware):
+    - IBM LTO Generation 6 tape drives
+      (IBM TS2360, IBM TS2260, drives in IBM 7226 Multimedia Storage Enclosure, or OEM drives)
+    - IBM LTO Generation 5 tape drives
+      (IBM TS2350, IBM TS2250, drives in IBM 7226 Multimedia Storage Enclosure, or OEM drives)
+    - TS1140 tape drives
+    - TS1150 tape drives
+
+For information about connectivity and configurations for the IBM Spectrum Archive Single Drive Edition on IBM branded tape drives,
+refer to the online IBM Spectrum Archive Single Drive Edition documentation that is available on IBM Knowledge Center:
+
+  http://www.ibm.com/support/knowledgecenter/STQNYL
+
+For information about latest versions of drive firmware,
+and hardware interoperability known issues and limitations, refer to the IBM System Storage Interoperation Center (SSIC).
+
+The IBM SSIC can be found at the following website:
+  http://www.ibm.com/systems/support/storage/config/ssic
+
+For OEM branded tape drives, ask your supplier about the interoperability.
+
+Usage example:
+==============
+
+1. Add /usr/local/bin to the command search path.
+
+  The LTFS package is installed under /usr/local.
+  Add /usr/local/bin to your command search path by issuing the following command:
+
+  $ export PATH="$PATH:/usr/local/bin"
+
+2. Format the tape cartridge in the LTFS format by issuing the following command for your platform:
+
+   Linux
+      $ mkltfs -d /dev/IBMtape0
+
+   Mac OS X
+      The device name can be confirmed by the system profiler
+      $ mkltfs -d 0
+
+3. Mount the formatted tape cartridge by issuing the following commands for your platform:
+
+   Linux
+     $ mkdir /mnt/ltfs
+     $ ltfs /mnt/ltfs -o devname=/dev/IBMtape0
+
+   Mac OS X
+     $ mkdir /mnt
+     $ mkdir /mnt/ltfs
+     $ ltfs /mnt/ltfs -o devname=0
+
+4. Unmount the tape cartridge by issuing the following command.
+   (This command flushes the data buffer of the file system to the tape cartridge and prepares to eject the cartridge.)
+
+  $ umount /mnt/ltfs
+    OR
+  $ fusermount -u /mnt/ltfs
+
+Changes in this version (from 2.2.0.2 to 2.2.1.0):
+===============================================
+  - Changed its program name from IBM Linear Tape File System (LTFS)
+
+Change Log:
+============================================
+(from 2.2.0.1 to 2.2.0.2)
+  - Support for TS1150 tape drives (Linux Only)
+  - Support for CRC32C logical block protection for TS1150 tape drives with SSE 4.2 instruction set (Linux Only)
+
+(from 2.2.0.0 to 2.2.0.1)
+  - Supported USB LTO tape drives
+
+(from 1.3.0.2 to 2.2.0.0)
+  - New OS support:
+    - OS X 10.9 Mavericks
+  - Change version number rule
+    - First 3 digits indicate supported version of the LTFS format specifications
+  - Improved sparse file handling
+    - Write sparse file data in order to improve read back performance
+  - Improved performance of writing index
+  - Improved performance of writing small files
+  - Problem fixes reported in the previous versions
+  - (Linux Only) Implemented the capability of SNMP
+  - Change OSXFUSE bundling from 2.5.6 to 2.6.2.
+
+(from 1.3.0.1 to 1.3.0.2)
+  - Problem fixes reported in 1.3.0.1
+  - Supported LTFS format specifications 2.2.0
+  - New OS support:
+    - OS X 10.8 Mountain Lion (64 bit only)
+  - New architecture support:
+    - Power PC (64 bit only, RHEL 5.9 and 6.2 only)
+  - Change OSXFUSE bundling from 2.3.9 to 2.5.6.
+
+(From 1.3.0 to 1.3.0.1)
+  - Improved memory footprint on the cartridge mount operation
+  - (Mac OS X only) Fix the handling of voice sound marks of Japanese characters in file names
+
+(From 1.2.5 to 1.3.0)
+  - Supported IBM TS1140 tape drive
+  - Supported IBM LTO6 tape drive
+  - Supported LTFS format specifications 2.1.0
+    - Supported symbolic link
+    - Added VEAs on ltfs.software category
+    - Supported vendor unique VEAs
+  - Supported rollback mount
+  - Supported to eject when ltfs is unmounted
+  - Supported to list available devices
+  - Supported to release reserved device to recover from unexpected shutdown
+  - Improve file creation time when a directory has many files
+  - Enhanced the ability to recover from sudden cable pull
+  - Support logical block protection feature on IBM tape drives
+  - Add the I/F to pass a data encryption key to the tape drive with AME
+  - Change OSXFUSE bundling from 2.3.8 to 2.3.9.
+
+(From 1.2.0 to 1.2.5)
+  New Platform Support:
+    - Added support for Mac OS X 10.7 Lion, either in 32-bit or 64-bit kernel mode,
+      by bundling OSXFUSE 2.3.8 as the replacement of MacFUSE
+
+  RAS enhancements:
+    - Improved the handling of a cartridge that was not unmounted properly
+    - Improved the handling of a full data cartridge
+    - Improved the process for storing a file on the index partition when the data placement
+      policy is specified
+
+  Usability enhancements:
+    - Added support for the -f option with the mkltfs command to prevent the user from overwriting
+      the LTFS-formatted cartridge by accident
+    - Added four new virtual extended attributes (VEAs) for identifying the software version
+      information from the command line
+       - ltfs.softwareVendor, ltfs.softwareProduct, ltfs.softwareVersion, ltfs.softwareFormatSpec
+    - Modified to update the change time of a file or directory when ltfs.modifyTime VEA is written
+    - (Mac OS X only) Changed to display the cartridge's volume name below its icon, as specified
+      by the -n option of the mkltfs command
+    - (Mac OS X only) Added ability for LTFS to run in the background, as same as Linux version,
+      if -f option is not specified
+
+  Fixes:
+  - Fixed the problem that ltfs.mediaStorageAlert VEA is cleared when other VEA is read
+
+(From 1.0.1 to 1.2.0)
+  - Changed its program name from Linear Tape File System
+    to Linear Tape File System
+  - Enhanced the ability to recover the tapes in inconsistent state,
+    which was caused by unexpected power outage.
+  - Added a new function to flush the in-memory user data to the tape medium
+    at pre-defined timing; either sync at file close or sync periodically (default)
+  - Conforms with new LTFS Format Specification 2.0.0
+    - Backward compatibility with Version 1.0 formatted tapes, and built-in
+      automatic migration mechanism to Version 2.0.0 format
+    - Improved the parsing and handling of the index information
+    - Supports standardized virtual extended attribute (VEA) names.
+      VEA names used in previous release of LTFS become obsolete and
+      no longer available.
+  - Changed the default block size to 512KB
+    - Backward read/write compatibility with 1MB blocksize tapes
+  - Changed the command line syntax of ltfs and mkltfs command for
+    specifying the data placement rules
+
+(From 1.00 to 1.0.1)
+    - Support virtual extended attributes
+    - Added new eject-on-unmount option (-o eject) to ltfs command for ejecting
+      the cartridge automatically after completing the unmount operation.
+    - Improve format time by reducing number of partition switches during
+      volume format in mkltfs
+    - Improve mount time by swapping the physical IDs of the index and
+      data partitions
+    - Improve backward read access performance for the files smaller than 1MB
+    - Improve index parse time
+    - Change not to load the tape cartridge into the LTO drive when
+      LTO-4 drive or older is attached (Mac OS X only)
+    - Correct error messages for partition full condition
+    - Correct error messages when drive encounters errors during mount
+    - Fix ltfsck to list rollback points when the drive returns an unexpected
+      error
+    - Fix to store files to index partition when the files stored into
+      index partition is overwritten
+    - Remove incorrect syntax example for rules from mkltfs help message
+
+Note to users:
+==============
+
+  General Notice
+  --------------
+  - Refer to the documents distributed with the tape drive and the IBM Spectrum Archive.
+  - The IBM LTO and enterprise tape drives provide the hardware for data compression. The amount of
+    written data on a tape can vary from the original data size.
+
+
+Known Issues:
+==============
+
+  1. (Mac OS X)  IBM Spectrum Archive does not support moving a folder within LTFS formatted cartridge.
+     Any attempt to move a folder in such a manner will result in an "operation not permitted" error,
+     and the operation will be ignored.  The user can still move a file within LTFS formatted cartridge,
+     and the user can also move a folder from LTFS formatted cartridge to a non-LTFS file system or vice versa.
+  2. (Mac OS X)  Mac OS X's Spotlight will not display the files on LTFS formatted cartridge as a result of a search.
+
+=====================================================
+For contribution to the IBM Spectrum Archive project, copy and paste the
+following questions, along with your responses, in the body of an email and
+send with your contribution to ltfsoss1@jp.ibm.com.
+
+By making a contribution to this project, I certify that:
+
+(a)	The contribution was created in whole or in part by me and I have
+      the right to submit it under the open source license indicated in
+      the file; or
+
+(b)	The contribution is based upon previous work that, to the best of
+      my knowledge, is covered under an appropriate open source License
+      and I have the right under that license to submit that work with
+      modifications, whether created in whole or in part by me, under
+      the same open source license (unless I am permitted to submit
+      under a different license), as indicated in the file; or
+
+(c)	The contribution was provided directly to me by some other person
+      who certified (a), (b) or (c) and I have not modified it.
+
+(d)	The contribution is made free of any other party's intellectual
+      property claims or rights.
+
+(e)	I understand and agree that this project and the contribution are
+      public and that a record of the contribution (including all
+      personal information I submit with it, including my sign-off) is
+      maintained indefinitely and may be redistributed consistent with
+      this project or the open source license(s) involved.
+
+Signed-off-by
+
+======================================================================
