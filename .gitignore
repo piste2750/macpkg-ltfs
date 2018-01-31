@@ -1,0 +1,16 @@
+*.o
+*.dylib
+LinearTapeFileSystem*
+*.pkg
+distribution
+ltfs
+ltfs-sde
+ltfsck
+mkltfs
+ltfs.conf
+GPATH
+GRTAGS
+GTAGS
+TAGS
+tags
+*~

@@ -51,7 +51,7 @@
 ######################################################################################
 
 # LTFS version
-LTFS_VERSION = 2.2.0
+LTFS_VERSION = 2.4.0
 
 # Installation prefix
 PREFIX = /Library/Frameworks/LTFS.framework/Versions/Current/usr
@@ -70,11 +70,11 @@ DEBUG = -DDEBUG
 
 ## Generic compiler settings
 CC = clang
-CFLAGS	= $(DEBUG) -I. -Wall -g -DLTFS_BASE_DIR=\"\" -I tape_drivers
+CFLAGS	= $(DEBUG) -Iltfs/src -Wall -g -DLTFS_BASE_DIR=\"\" -DSUPPORT_BUGGY_IF -I ltfs/src/tape_drivers
 LDFLAGS = -L/usr/local/lib
 
 ## Add platform settings
-CFLAGS  += -D_GNU_SOURCE
+CFLAGS  += -D_GNU_SOURCE -D__APPLE_MAKEFILE__
 
 ifeq ($(shell uname -s),Darwin)
 	FRAMEWORKS = -framework IOKit -framework CoreFoundation -framework ICU
@@ -124,40 +124,69 @@ DYLDFLAGS = -dynamiclib
 
 #############################################################################
 
-IOKITBASEDIR = iokitbase
+COMMON_OBJS   =	ltfs/src/libltfs/base64.o \
+				ltfs/src/libltfs/config_file.o \
+				ltfs/src/libltfs/dcache.o \
+				ltfs/src/libltfs/fs.o \
+				ltfs/src/libltfs/index_criteria.o \
+				ltfs/src/libltfs/iosched.o \
+				ltfs/src/libltfs/kmi.o \
+				ltfs/src/libltfs/label.o \
+				ltfs/src/libltfs/ltfs.o \
+				ltfs/src/libltfs/ltfs_fsops.o \
+				ltfs/src/libltfs/ltfs_fsops_raw.o \
+				ltfs/src/libltfs/ltfs_internal.o \
+				ltfs/src/libltfs/ltfslogging.o \
+				ltfs/src/libltfs/ltfssnmp.o \
+				ltfs/src/libltfs/pathname.o \
+				ltfs/src/libltfs/periodic_sync.o \
+				ltfs/src/libltfs/plugin.o \
+				ltfs/src/libltfs/tape.o \
+				ltfs/src/libltfs/xattr.o \
+				ltfs/src/libltfs/xml_common.o \
+				ltfs/src/libltfs/xml_reader.o \
+				ltfs/src/libltfs/xml_writer.o \
+				ltfs/src/libltfs/xml_reader_libltfs.o \
+				ltfs/src/libltfs/xml_writer_libltfs.o \
+				ltfs/src/libltfs/ltfs_thread.o \
+				ltfs/src/libltfs/ltfstrace.o \
+				ltfs/src/libltfs/arch/time_internal.o \
+				ltfs/src/libltfs/arch/osx/osx_string.o \
+				ltfs/src/libltfs/arch/uuid_internal.o \
+				ltfs/src/libltfs/arch/filename_handling.o \
+				ltfs/src/libltfs/arch/arch_info.o \
+				ltfs/src/libltfs/arch/errormap.o
 
-COMMON_OBJS   =	libltfs/base64.o libltfs/config_file.o libltfs/dcache.o libltfs/fs.o libltfs/index_criteria.o \
-				libltfs/iosched.o libltfs/kmi.o libltfs/label.o libltfs/ltfs.o libltfs/ltfs_fsops.o libltfs/ltfs_fsops_raw.o \
-				libltfs/ltfs_internal.o libltfs/ltfslogging.o libltfs/ltfssnmp.o libltfs/pathname.o libltfs/periodic_sync.o \
-				libltfs/plugin.o libltfs/tape.o libltfs/xattr.o libltfs/xml_common.o libltfs/xml_reader.o libltfs/xml_writer.o \
-				libltfs/xml_reader_libltfs.o libltfs/xml_writer_libltfs.o libltfs/ltfs_thread.o libltfs/ltfstrace.o \
-				libltfs/arch/time_internal.o libltfs/arch/osx/osx_string.o libltfs/arch/uuid_internal.o libltfs/arch/filename_handling.o \
-				libltfs/arch/arch_info.o libltfs/arch/errormap.o
+LIBLTFS_OBJS =		$(COMMON_OBJS) ltfs/messages/libltfs_dat.o ltfs/messages/internal_error_dat.o ltfs/messages/tape_common_dat.o
 
-LIBLTFS_OBJS =		$(COMMON_OBJS) ../messages/libltfs_dat.o ../messages/internal_error_dat.o
+LIBUNIFIED_OBJS =	ltfs/src/iosched/unified.o ltfs/src/iosched/cache_manager.o ltfs/messages/iosched_unified_dat.o
 
-LIBUNIFIED_OBJS =	iosched/unified.o iosched/cache_manager.o ../messages/iosched_unified_dat.o
+LIBFCFS_OBJS =		ltfs/src/iosched/fcfs.o ltfs/messages/iosched_fcfs_dat.o
 
-LIBFCFS_OBJS =		iosched/fcfs.o ../messages/iosched_fcfs_dat.o
+LIBFLATFILE_OBJS =	ltfs/src/kmi/flatfile.o ltfs/src/kmi/key_format_ltfs.o ltfs/messages/kmi_flatfile_dat.o
 
-LIBFLATFILE_OBJS =	kmi/flatfile.o kmi/key_format_ltfs.o ../messages/kmi_flatfile_dat.o
+LIBSIMPLE_OBJS =	ltfs/src/kmi/simple.o ltfs/src/kmi/key_format_ltfs.o ltfs/messages/kmi_simple_dat.o
 
-LIBSIMPLE_OBJS =	kmi/simple.o kmi/key_format_ltfs.o ../messages/kmi_simple_dat.o
+LIBFILE_OBJS     =	ltfs/src/tape_drivers/generic/file/filedebug_tc.o \
+					ltfs/src/tape_drivers/generic/file/filedebug_conf_tc.o \
+					ltfs/src/tape_drivers/ibm_tape.o \
+					ltfs/messages/tape_generic_file_dat.o
 
-LIBFILE_OBJS =		tape_drivers/generic/file/filedebug_tc.o tape_drivers/generic/file/filedebug_conf_tc.o ../messages/driver_generic_file_dat.o
+LIBITDTIMG_OBJS =	ltfs/src/tape_drivers/generic/itdtimg/itdtimg_tc.o ltfs/messages/tape_generic_itdtimg_dat.o
 
-LIBITDTIMG_OBJS =		tape_drivers/generic/itdtimg/itdtimg_tc.o ../messages/driver_generic_itdtimg_dat.o
+LIBIOKIT_OBJS = ltfs/src/tape_drivers/osx/iokit-ibmtape/iokit_service.o  \
+                ltfs/src/tape_drivers/osx/iokit-ibmtape/iokit_scsi.o     \
+                ltfs/src/tape_drivers/osx/iokit-ibmtape/iokit_ibmtape.o  \
+                ltfs/src/tape_drivers/ibm_tape.o                 \
+                ltfs/src/tape_drivers/reed_solomon_crc.o         \
+                ltfs/src/tape_drivers/crc32c_crc.o               \
+                ltfs/messages/tape_iokit_ibmtape_dat.o
 
-LIBIOKIT_OBJS =	tape_drivers/osx/iokit/iokit_scsi_base.o tape_drivers/osx/iokit/iokit_scsi_operations.o	\
-				tape_drivers/osx/iokit/iokit_singledrive.o tape_drivers/osx/iokit/iokit_common.o 		\
-				tape_drivers/reed_solomon_crc.o tape_drivers/crc32c_crc.o\
-				../messages/driver_osx_iokit_dat.o
+LTFS_OBJS     = ltfs/src/main.o ltfs/src/ltfs_fuse.o ltfs/messages/bin_ltfs_dat.o
 
-LTFS_OBJS     = main.o ltfs_fuse.o ../messages/bin_ltfs_dat.o
+MKFS_OBJS     = ltfs/src/utils/mkltfs.o ltfs/messages/bin_mkltfs_dat.o
 
-MKFS_OBJS     = utils/mkltfs.o ../messages/bin_mkltfs_dat.o
-
-FSCK_OBJS     = utils/ltfsck.o ../messages/bin_ltfsck_dat.o
+FSCK_OBJS     = ltfs/src/utils/ltfsck.o ltfs/messages/bin_ltfsck_dat.o
 
 LTFS_LIBS =	libiokit.$(LTFS_VERSION).dylib libiokit.dylib                  \
 		libltfs.$(LTFS_VERSION).dylib libltfs.dylib                    \
@@ -167,10 +196,10 @@ LTFS_LIBS =	libiokit.$(LTFS_VERSION).dylib libiokit.dylib                  \
 		libkmi-simple.$(LTFS_VERSION).dylib libkmi-simple.dylib
 
 
-all: libltfs libdriver-iokit libdriver-file libdriver-itdtimg ltfs mkltfs ltfsck libiosched-unified libiosched-fcfs libkmi-flatfile libkmi-simple
+all: libltfs libtape-iokit libtape-file libtape-itdtimg ltfs-sde mkltfs ltfsck libiosched-unified libiosched-fcfs libkmi-flatfile libkmi-simple
 
-ltfs: $(LTFS_OBJS)
-	$(CC) -std=gnu99 $(LTFS_OBJS) -o ltfs $(LDFLAGS) -L. -lltfs $(foreach dir,$(LD_LIBRARY_PATH), -L$(dir))
+ltfs-sde: $(LTFS_OBJS)
+	$(CC) -std=gnu99 $(LTFS_OBJS) -o ltfs-sde $(LDFLAGS) -L. -lltfs $(foreach dir,$(LD_LIBRARY_PATH), -L$(dir))
 
 mkltfs: $(MKFS_OBJS)
 	$(CC) -std=gnu99 $(MKFS_OBJS) -o mkltfs $(LDFLAGS) -L. -lltfs $(foreach dir,$(LD_LIBRARY_PATH), -L$(dir))
@@ -182,17 +211,17 @@ libltfs: $(LIBLTFS_OBJS)
 	$(CC) -std=gnu99 -dynamiclib $(LIBLTFS_OBJS) $(LDFLAGS) -install_name $(PREFIX)/lib/libltfs.$(LTFS_VERSION).dylib -o libltfs.$(LTFS_VERSION).dylib
 	ln -fs libltfs.$(LTFS_VERSION).dylib libltfs.dylib
 
-libdriver-file: libltfs $(LIBFILE_OBJS)
-	$(CC) -std=gnu99 -dynamiclib $(LIBFILE_OBJS) $(LDFLAGS) -L. -lltfs -install_name $(PREFIX)/lib/ltfs/libdriver-file.$(LTFS_VERSION).dylib -o libdriver-file.$(LTFS_VERSION).dylib
-	ln -fs libdriver-file.$(LTFS_VERSION).dylib libdriver-file.dylib
+libtape-file: libltfs $(LIBFILE_OBJS)
+	$(CC) -std=gnu99 -dynamiclib $(LIBFILE_OBJS) $(LDFLAGS) -L. -lltfs -install_name $(PREFIX)/lib/ltfs/libtape-file.$(LTFS_VERSION).dylib -o libtape-file.$(LTFS_VERSION).dylib
+	ln -fs libtape-file.$(LTFS_VERSION).dylib libtape-file.dylib
 
-libdriver-itdtimg: libltfs $(LIBITDTIMG_OBJS)
-	$(CC) -std=gnu99 -dynamiclib $(LIBITDTIMG_OBJS) $(LDFLAGS) -L. -lltfs -install_name $(PREFIX)/lib/ltfs/libdriver-itdtimg.$(LTFS_VERSION).dylib -o libdriver-itdtimg.$(LTFS_VERSION).dylib
-	ln -fs libdriver-itdtimg.$(LTFS_VERSION).dylib libdriver-itdtimg.dylib
+libtape-itdtimg: libltfs $(LIBITDTIMG_OBJS)
+	$(CC) -std=gnu99 -dynamiclib $(LIBITDTIMG_OBJS) $(LDFLAGS) -L. -lltfs -install_name $(PREFIX)/lib/ltfs/libtape-itdtimg.$(LTFS_VERSION).dylib -o libtape-itdtimg.$(LTFS_VERSION).dylib
+	ln -fs libtape-itdtimg.$(LTFS_VERSION).dylib libtape-itdtimg.dylib
 
-libdriver-iokit: libltfs $(LIBIOKIT_OBJS)
-	$(CC) -std=gnu99 -dynamiclib $(LIBIOKIT_OBJS) $(LDFLAGS) -L. -lltfs -install_name $(PREFIX)/lib/ltfs/libdriver-iokit.$(LTFS_VERSION).dylib -o libdriver-iokit.$(LTFS_VERSION).dylib
-	ln -fs libdriver-iokit.$(LTFS_VERSION).dylib libdriver-iokit.dylib
+libtape-iokit: libltfs $(LIBIOKIT_OBJS)
+	$(CC) -std=gnu99 -dynamiclib $(LIBIOKIT_OBJS) $(LDFLAGS) -L. -lltfs -install_name $(PREFIX)/lib/ltfs/libtape-iokit.$(LTFS_VERSION).dylib -o libtape-iokit.$(LTFS_VERSION).dylib
+	ln -fs libtape-iokit.$(LTFS_VERSION).dylib libtape-iokit.dylib
 
 libiosched-fcfs: libltfs $(LIBFCFS_OBJS)
 	$(CC) -std=gnu99 -dynamiclib $(LIBFCFS_OBJS) $(LDFLAGS) -L. -lltfs -install_name $(PREFIX)/lib/ltfs/libiosched-fcfs.$(LTFS_VERSION).dylib -o libiosched-fcfs.$(LTFS_VERSION).dylib
@@ -215,9 +244,7 @@ libkmi-simple: libltfs $(LIBSIMPLE_OBJS)
 	ln -fs libkmi-simple.$(LTFS_VERSION).dylib libkmi-simple.dylib
 
 clean:
-	rm -f ltfs mkltfs
-	rm -rf $(IOKITBASEDIR)
-	rm -rf iokitbase.tar.gz
+	rm -f ltfs-sde mkltfs ltfsck
 	find . -name \*~      | xargs rm -f
 	find . -name \*.dylib | xargs rm -f
 	find . -name \*.o     | xargs rm -f
@@ -230,14 +257,3 @@ tape_drivers/reed_solomon_crc.o: tape_drivers/reed_solomon_crc.c
 
 tape_drivers/crc32c_crc.o: tape_drivers/crc32c_crc.c
 	$(CC) -std=gnu99 -c -o $@ $< $(CFLAGS) -O2 -msse4.2 -D__SSE42__ -I ../..
-
-iokitbase:
-	mkdir $(IOKITBASEDIR)
-
-	cp ltfsprintf.h $(IOKITBASEDIR)
-	cp tape_drivers/osx/iokit/iokit_scsi_base.c     $(IOKITBASEDIR)
-	cp tape_drivers/osx/iokit/iokit_scsi_base.h     $(IOKITBASEDIR)
-	cp tape_drivers/osx/iokit/trace.h               	$(IOKITBASEDIR)
-
-	tar zcvf iokitbase.tar.gz $(IOKITBASEDIR)
-	rm -rf $(IOKITBASEDIR)

@@ -58,7 +58,8 @@ FUSE="NONE";
 #
 LTFS_FRAMEWORK=LTFS.framework
 LTFS_FRAMEWORK_EXECUTABLE=LTFS
-LTFS_VERSION=2.2.0
+LTFS_VERSION=2.4.0
+LTFS_VERSION_FULL=2.4.0.1
 
 OUTPUT_DIR_NAME=distribution
 
@@ -71,10 +72,8 @@ LTFS_INSTALL_PREFIX=/Library/Frameworks/${LTFS_FRAMEWORK}/Versions/Current/usr
 LTFS_CONF_PREFIX=/Library/Frameworks/${LTFS_FRAMEWORK}/Versions/Current/etc
 LTFS_FRAMEWORK_DIR=${BASEDIR}/${OUTPUT_DIR_NAME}/${LTFS_FRAMEWORK}
 LTFS_BUILD_OUTPUT_DIR=${LTFS_FRAMEWORK_DIR}/Versions/Current/usr
-LTFS_SRC_DIR=${BASEDIR}/src
-LTFS_CONF_DIR=${BASEDIR}/conf
-TARBALL_VERSION=`echo ${LTFS_VERSION} | tr '.' '_'`
-LTFS_TARBALL=ltfs-iokit-bin-v${TARBALL_VERSION}.tar.gz
+LTFS_BIN_DIR=${BASEDIR}
+LTFS_CONF_DIR=${BASEDIR}/ltfs/conf
 
 if [ "x${GNUMAKE}" = "x" ]; then
 	GNUMAKE=/usr/bin/gnumake
@@ -130,11 +129,12 @@ if [ $# -ne 0 ]; then
 		cd ${BASEDIR}
 		/bin/rm -rf ${OUTPUT_DIR_NAME}
 
-		cd ${BASEDIR}/messages
-		${GNUMAKE} -f Makefile.osx clean-local
+		${GNUMAKE} -f Makefile.message clean-local
+		${GNUMAKE} -f Makefile.conf clean-local
+		${GNUMAKE} -f Makefile.src clean
 
-		cd ${LTFS_SRC_DIR}
-		${GNUMAKE} -f Makefile.osx clean
+		rm -rf LinearTapeFileSystem-ltfs-14b1eed
+		rm -f ltfs
 
 		exit 0
 	else
@@ -165,6 +165,10 @@ echo ""
 echo "Checking pre-requisites..."
 check_prereqs
 
+echo ""
+echo "Downloading LTFS source 2.4.0.1 (10062)..."
+curl -L https://api.github.com/repos/LinearTapeFileSystem/ltfs/tarball/v2.4.0.1-10062 | tar -xvzf -
+ln -s LinearTapeFileSystem-ltfs-14b1eed ltfs
 
 #
 # Create framework skeleton
@@ -193,12 +197,11 @@ mkdir -p share/ltfs
 #
 # Compile code
 #
+cd ${BASEDIR}
 echo ""
 echo "Building message library..."
 
-cd ${BASEDIR}/messages
-${GNUMAKE} -f Makefile.osx clean-local &&   \
-${GNUMAKE} -f Makefile.osx
+${GNUMAKE} -f Makefile.messages
 if [ $? != "0" ]; then
 	echo "Encountered problem building message library."
 	exit 1
@@ -207,14 +210,10 @@ fi
 echo ""
 echo "Building binaries..."
 
-cd ${LTFS_SRC_DIR}
-
-${GNUMAKE} -f Makefile.osx clean && 	\
-
 if [ "x${FUSE}" = "MACFUSE" ]; then
-	${GNUMAKE} -f Makefile.osx CONFDIR="${LTFS_CONF_PREFIX}" FUSE=MACFUSE PREFIX="${LTFS_INSTALL_PREFIX}" DEBUG="${DEBUG_FLAGS}"
+	${GNUMAKE} -f Makefile.src CONFDIR="${LTFS_CONF_PREFIX}" FUSE=MACFUSE PREFIX="${LTFS_INSTALL_PREFIX}" DEBUG="${DEBUG_FLAGS}"
 else
-	${GNUMAKE} -f Makefile.osx CONFDIR="${LTFS_CONF_PREFIX}" FUSE=OSXFUSE PREFIX="${LTFS_INSTALL_PREFIX}" DEBUG="${DEBUG_FLAGS}"
+	${GNUMAKE} -f Makefile.src CONFDIR="${LTFS_CONF_PREFIX}" FUSE=OSXFUSE PREFIX="${LTFS_INSTALL_PREFIX}" DEBUG="${DEBUG_FLAGS}"
 fi
 
 if [ $? != "0" ]; then
@@ -229,57 +228,59 @@ fi
 echo ""
 echo "Copying binaries to output folders..."
 
-cd ${LTFS_SRC_DIR}
+cd ${LTFS_BIN_DIR}
 
-BIN_FILES="ltfs mkltfs ltfsck"
+BIN_FILES="ltfs-sde mkltfs ltfsck"
 for f in ${BIN_FILES}
 do
 	echo "Copying ${f} to ${BASEDIR}/${OUTPUT_DIR_NAME}${LTFS_INSTALL_PREFIX}/bin/"
-	cp ${LTFS_SRC_DIR}/${f} ${LTFS_BUILD_OUTPUT_DIR}/bin
+	cp ${LTFS_BIN_DIR}/${f} ${LTFS_BUILD_OUTPUT_DIR}/bin
 	if [ $? != "0" ]; then
 		echo "Encountered problem copying files."
 		exit 1
 	fi
 done
 
-cp ${LTFS_SRC_DIR}/libltfs.${LTFS_VERSION}.dylib ${LTFS_BUILD_OUTPUT_DIR}/lib
+mv ${LTFS_BUILD_OUTPUT_DIR}/bin/ltfs-sde ${LTFS_BUILD_OUTPUT_DIR}/bin/ltfs
+
+cp ${LTFS_BIN_DIR}/libltfs.${LTFS_VERSION}.dylib ${LTFS_BUILD_OUTPUT_DIR}/lib
 if [ $? != "0" ]; then
 	echo "Encountered problem copying files."
 	exit 1
 fi
 
-cp -R ${LTFS_SRC_DIR}/libiosched-unified.${LTFS_VERSION}.dylib ${LTFS_BUILD_OUTPUT_DIR}/lib/ltfs
+cp -R ${LTFS_BIN_DIR}/libiosched-unified.${LTFS_VERSION}.dylib ${LTFS_BUILD_OUTPUT_DIR}/lib/ltfs
 if [ $? != "0" ]; then
 	echo "Encountered problem copying files."
 	exit 1
 fi
-cp -R ${LTFS_SRC_DIR}/libiosched-fcfs.${LTFS_VERSION}.dylib ${LTFS_BUILD_OUTPUT_DIR}/lib/ltfs
+cp -R ${LTFS_BIN_DIR}/libiosched-fcfs.${LTFS_VERSION}.dylib ${LTFS_BUILD_OUTPUT_DIR}/lib/ltfs
 if [ $? != "0" ]; then
 	echo "Encountered problem copying files."
 	exit 1
 fi
-cp -R ${LTFS_SRC_DIR}/libkmi-flatfile.${LTFS_VERSION}.dylib ${LTFS_BUILD_OUTPUT_DIR}/lib/ltfs
+cp -R ${LTFS_BIN_DIR}/libkmi-flatfile.${LTFS_VERSION}.dylib ${LTFS_BUILD_OUTPUT_DIR}/lib/ltfs
 if [ $? != "0" ]; then
 	echo "Encountered problem copying files."
 	exit 1
 fi
-cp -R ${LTFS_SRC_DIR}/libkmi-simple.${LTFS_VERSION}.dylib ${LTFS_BUILD_OUTPUT_DIR}/lib/ltfs
+cp -R ${LTFS_BIN_DIR}/libkmi-simple.${LTFS_VERSION}.dylib ${LTFS_BUILD_OUTPUT_DIR}/lib/ltfs
 if [ $? != "0" ]; then
 	echo "Encountered problem copying files."
 	exit 1
 fi
 
-cp -R ${LTFS_SRC_DIR}/libdriver-iokit.${LTFS_VERSION}.dylib ${LTFS_BUILD_OUTPUT_DIR}/lib/ltfs
+cp -R ${LTFS_BIN_DIR}/libtape-iokit.${LTFS_VERSION}.dylib ${LTFS_BUILD_OUTPUT_DIR}/lib/ltfs
 if [ $? != "0" ]; then
 	echo "Encountered problem copying files."
 	exit 1
 fi
-cp -R ${LTFS_SRC_DIR}/libdriver-file.${LTFS_VERSION}.dylib ${LTFS_BUILD_OUTPUT_DIR}/lib/ltfs
+cp -R ${LTFS_BIN_DIR}/libtape-file.${LTFS_VERSION}.dylib ${LTFS_BUILD_OUTPUT_DIR}/lib/ltfs
 if [ $? != "0" ]; then
 	echo "Encountered problem copying files."
 	exit 1
 fi
-cp -R ${LTFS_SRC_DIR}/libdriver-itdtimg.${LTFS_VERSION}.dylib ${LTFS_BUILD_OUTPUT_DIR}/lib/ltfs
+cp -R ${LTFS_BIN_DIR}/libtape-itdtimg.${LTFS_VERSION}.dylib ${LTFS_BUILD_OUTPUT_DIR}/lib/ltfs
 if [ $? != "0" ]; then
 	echo "Encountered problem copying files."
 	exit 1
@@ -292,9 +293,9 @@ cd ${LTFS_BUILD_OUTPUT_DIR}/lib
 ln -fs libltfs.${LTFS_VERSION}.dylib libltfs.dylib
 
 cd ${LTFS_BUILD_OUTPUT_DIR}/lib/ltfs
-ln -fs libdriver-iokit.${LTFS_VERSION}.dylib libdriver-iokit.dylib
-ln -fs libdriver-file.${LTFS_VERSION}.dylib libdriver-file.dylib
-ln -fs libdriver-itdtimg.${LTFS_VERSION}.dylib libdriver-itdtimg.dylib
+ln -fs libtape-iokit.${LTFS_VERSION}.dylib libtape-iokit.dylib
+ln -fs libtape-file.${LTFS_VERSION}.dylib libtape-file.dylib
+ln -fs libtape-itdtimg.${LTFS_VERSION}.dylib libtape-itdtimg.dylib
 
 cd ${LTFS_BUILD_OUTPUT_DIR}/lib/ltfs
 ln -fs libiosched-unified.${LTFS_VERSION}.dylib libiosched-unified.dylib
@@ -314,18 +315,17 @@ ln -fs Versions/Current/usr/lib/libltfs.${LTFS_VERSION}.dylib ${LTFS_FRAMEWORK_E
 echo ""
 echo "Copying documentation..."
 cd ${LTFS_BUILD_OUTPUT_DIR}/share/ltfs
-cp -R ${BASEDIR}/doc .
+cp -R ${BASEDIR}/ltfs/docs ./doc
 
 #
 # Create and copy over configuration file
 #
 echo ""
 echo "Copying configuration file..."
-cd ${LTFS_CONF_DIR}
-${GNUMAKE} -f Makefile.osx clean-local &&   \
-${GNUMAKE} LIBDIR=${LTFS_INSTALL_PREFIX}/lib DEFAULT_DRIVER=iokit DEFAULT_IOSCHED=unified DEFAULT_KMI=none CONFDIR="${LTFS_CONF_PREFIX}" -f Makefile.osx
+cd ${BASEDIR}
+${GNUMAKE} LIBDIR=${LTFS_INSTALL_PREFIX}/lib DEFAULT_DRIVER=iokit DEFAULT_IOSCHED=unified DEFAULT_KMI=none CONFDIR="${LTFS_CONF_PREFIX}" -f Makefile.conf
 mkdir -p ${LTFS_FRAMEWORK_DIR}/Versions/Current/etc
-cp ${LTFS_CONF_DIR}/ltfs.conf ${LTFS_FRAMEWORK_DIR}/Versions/Current/etc/ltfs.conf
+cp ltfs.conf ${LTFS_FRAMEWORK_DIR}/Versions/Current/etc/ltfs.conf
 cp ${LTFS_CONF_DIR}/ltfs.conf.local ${LTFS_FRAMEWORK_DIR}/Versions/Current/etc/ltfs.conf.local
 
 ##
@@ -345,7 +345,7 @@ find share -type f    | xargs chmod a+r
 ##
 cd ${BASEDIR}/${OUTPUT_DIR_NAME}
 PACKAGE_MAKER=/Developer/Applications/Utilities/PackageMaker.app/Contents/MacOS/PackageMaker
-${PACKAGE_MAKER} -d ${BASEDIR}/osx_installer/LTFS.pmdoc -v -i com.ibm.ltfs -o ${BASEDIR}/${OUTPUT_DIR_NAME}/LongTermFileSystem.pkg
+${PACKAGE_MAKER} -d ${BASEDIR}/osx_installer/LTFS.pmdoc -v -i com.ibm.ltfs -o ${BASEDIR}/${OUTPUT_DIR_NAME}/LTFS-${LTFS_VERSION_FULL}.pkg
 
 cd ${BASEDIR}
 echo "Build complete"
