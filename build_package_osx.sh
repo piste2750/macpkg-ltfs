@@ -59,7 +59,7 @@ FUSE="NONE";
 LTFS_FRAMEWORK=LTFS.framework
 LTFS_FRAMEWORK_EXECUTABLE=LTFS
 LTFS_VERSION=2.4.0
-LTFS_VERSION_FULL=2.4.0.1
+LTFS_VERSION_FULL=2.4.0.2
 
 OUTPUT_DIR_NAME=distribution
 
@@ -166,9 +166,9 @@ echo "Checking pre-requisites..."
 check_prereqs
 
 echo ""
-echo "Downloading LTFS source 2.4.0.1 (10062)..."
-curl -L https://api.github.com/repos/LinearTapeFileSystem/ltfs/tarball/v2.4.0.1-10062 | tar -xvzf -
-ln -s LinearTapeFileSystem-ltfs-14b1eed ltfs
+echo "Downloading LTFS source 2.4.0.2 (10071)..."
+curl -L https://api.github.com/repos/LinearTapeFileSystem/ltfs/tarball/v2.4.0.2-10071 | tar -xvzf -
+ln -s LinearTapeFileSystem-ltfs-c581544 ltfs
 
 #
 # Create framework skeleton
